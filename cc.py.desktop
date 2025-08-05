@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=cc.py
+Exec=AppRun
+Comment=A tool to convert Windows cursor themes to Linux format.
+Icon=cc.py
+Terminal=false
+Type=Application
+Categories=Utility;Graphics;
