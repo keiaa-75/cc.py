@@ -114,17 +114,33 @@ class CursorConverterLogic(QObject):
         return True
 
     def load_cursor_map(self, map_file_path):
+        """Loads cursor mapping from a JSON file and validates its content."""
         self.status_update.emit("Loading cursor mapping from file...")
         try:
             with open(map_file_path, 'r') as f:
                 self.cursor_map = json.load(f)
-            self.status_update.emit("Cursor mapping loaded successfully.")
+            
+            self.status_update.emit("Validating cursor map content...")
+            
+            # 1. Check if all required files have a corresponding key
+            for f in self.FILES:
+                if f not in self.cursor_map:
+                    self.status_update.emit(f"Error: Missing required cursor map entry for '{f}'.")
+                    return False
+            
+            for key, value in self.cursor_map.items():
+                if not isinstance(value, str):
+                    self.status_update.emit(f"Error: The value for key '{key}' is not a string. Found type: {type(value).__name__}.")
+                    return False
+            
+            self.status_update.emit("Cursor mapping loaded and validated successfully.")
             return True
+            
         except FileNotFoundError:
             self.status_update.emit(f"Error: Cursor map file '{map_file_path}' not found.")
             return False
-        except json.JSONDecodeError:
-            self.status_update.emit(f"Error: Failed to parse JSON from '{map_file_path}'. Please check the file's format.")
+        except json.JSONDecodeError as e:
+            self.status_update.emit(f"Error: Failed to parse JSON from '{map_file_path}'. Please check the file's format. Details: {e}")
             return False
 
     def check_files(self, source_dir):
