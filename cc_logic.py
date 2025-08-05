@@ -21,11 +21,13 @@ class CursorConverterLogic(QObject):
         self.venv_path = Path.home() / '.venvs/win2xcur-env'
         self.cursor_map = {}
 
-    def run_conversion(self, source_path, destination_path, map_file_path):
+    def run_conversion(self, source_path, destination_path, map_file_path, zip_theme, install_theme):
         self.status_update.emit("Starting conversion process...")
         self.status_update.emit(f"Source directory: {source_path}")
         self.status_update.emit(f"Destination directory: {destination_path}")
         self.status_update.emit(f"Cursor map file: {map_file_path}")
+        self.status_update.emit(f"Zip theme: {'Yes' if zip_theme else 'No'}")
+        self.status_update.emit(f"Install theme: {'Yes' if install_theme else 'No'}")
 
         try:
             source_dir = Path(source_path)
@@ -50,6 +52,11 @@ class CursorConverterLogic(QObject):
             self.copy_assets(dest_dir)
             self.initial_conversion_cleanup(dest_dir)
             self.build_theme_files(dest_dir)
+            
+            if zip_theme:
+                self.zip_theme(dest_dir)
+            if install_theme:
+                self.install_theme(dest_dir)
 
             self.status_update.emit("Conversion process completed successfully!")
             self.finished.emit(True)
@@ -59,7 +66,6 @@ class CursorConverterLogic(QObject):
             self.finished.emit(False)
 
     def check_dependencies(self):
-        # ... (This method remains the same)
         self.status_update.emit("Checking dependencies...")
         
         required_cmds = ['pip', 'python3', 'wget', 'zip']
@@ -82,7 +88,6 @@ class CursorConverterLogic(QObject):
         return True
     
     def setup_python_env(self):
-        # ... (This method remains the same)
         self.status_update.emit("Setting up Python virtual environment...")
         
         if not self.venv_path.exists():
@@ -109,7 +114,6 @@ class CursorConverterLogic(QObject):
         return True
 
     def load_cursor_map(self, map_file_path):
-        """Loads cursor mapping from a JSON file."""
         self.status_update.emit("Loading cursor mapping from file...")
         try:
             with open(map_file_path, 'r') as f:
@@ -124,7 +128,6 @@ class CursorConverterLogic(QObject):
             return False
 
     def check_files(self, source_dir):
-        # ... (This method remains the same)
         self.status_update.emit("Checking for required files...")
         
         for f in self.FILES:
@@ -136,10 +139,7 @@ class CursorConverterLogic(QObject):
         return True
 
     def initial_conversion(self, source_dir, dest_dir):
-        """Converts Windows cursors to Linux format using win2xcur."""
         self.status_update.emit("Starting initial cursor conversion...")
-        
-        # --- FIX IS HERE ---
         win2xcur_path = str(self.venv_path / 'bin' / 'win2xcur')
         
         for f in self.FILES:
@@ -154,7 +154,6 @@ class CursorConverterLogic(QObject):
                 raise e
 
     def copy_assets(self, dest_dir):
-        # ... (This method is updated to use self.cursor_map)
         self.status_update.emit("Copying and linking cursor assets...")
         cursor_dir = dest_dir / 'cursors'
         cursor_dir.mkdir(exist_ok=True)
@@ -171,7 +170,6 @@ class CursorConverterLogic(QObject):
         self.status_update.emit("Assets successfully copied and linked.")
 
     def initial_conversion_cleanup(self, dest_dir):
-        # ... (This method remains the same)
         self.status_update.emit("Cleaning up intermediate files...")
         for f in self.FILES:
             intermediate_file = dest_dir / f
@@ -180,7 +178,6 @@ class CursorConverterLogic(QObject):
         self.status_update.emit("Cleanup complete.")
 
     def build_theme_files(self, dest_dir):
-        # ... (This method remains the same)
         self.status_update.emit("Building theme files...")
         theme_name = dest_dir.name
         
@@ -190,3 +187,25 @@ class CursorConverterLogic(QObject):
         (dest_dir / 'cursor.theme').write_text(cursor_theme_content)
         (dest_dir / 'index.theme').write_text(index_theme_content)
         self.status_update.emit("Theme files created.")
+    
+    # -------------------- NEW METHODS --------------------
+    def zip_theme(self, dest_dir):
+        """Zips the theme directory."""
+        self.status_update.emit("Zipping theme...")
+        try:
+            shutil.make_archive(dest_dir, 'zip', root_dir=dest_dir.parent, base_dir=dest_dir.name)
+            self.status_update.emit(f"Successfully zipped theme to {dest_dir}.zip")
+        except Exception as e:
+            self.status_update.emit(f"Failed to zip theme: {e}")
+
+    def install_theme(self, dest_dir):
+        """Installs the theme by copying it to ~/.icons/."""
+        self.status_update.emit("Installing theme...")
+        try:
+            icons_dir = Path.home() / '.icons'
+            icons_dir.mkdir(parents=True, exist_ok=True)
+            
+            shutil.copytree(dest_dir, icons_dir / dest_dir.name, dirs_exist_ok=True)
+            self.status_update.emit(f"Successfully installed theme to {icons_dir / dest_dir.name}")
+        except Exception as e:
+            self.status_update.emit(f"Failed to install theme: {e}")
