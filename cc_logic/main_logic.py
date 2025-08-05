@@ -10,7 +10,7 @@ from .utilities import Utilities
 class CursorConverterLogic(QObject):
     status_update = pyqtSignal(str)
     finished = pyqtSignal(bool)
-    progress_update = pyqtSignal(int) # Add the new progress signal
+    progress_update = pyqtSignal(int)
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -24,21 +24,33 @@ class CursorConverterLogic(QObject):
         self.converter.status_update.connect(self.status_update)
         self.theme_builder.status_update.connect(self.status_update)
         self.utilities.status_update.connect(self.status_update)
-
-    def run_conversion(self, source_path, destination_path, map_file_path, zip_theme, install_theme):
-        self.status_update.emit("Starting conversion process...")
         
-        # ... (logging messages)
+        self.source_path = ""
+        self.destination_path = ""
+        self.map_file_path = ""
+        self.zip_theme = False
+        self.install_theme = False
+    
+    def set_conversion_parameters(self, source_path, destination_path, map_file_path, zip_theme, install_theme):
+        self.source_path = source_path
+        self.destination_path = destination_path
+        self.map_file_path = map_file_path
+        self.zip_theme = zip_theme
+        self.install_theme = install_theme
+
+    def run_conversion(self):
+        self.status_update.emit("Starting conversion process...")
+        self.status_update.emit(f"Source directory: {self.source_path}")
+        self.status_update.emit(f"Destination directory: {self.destination_path}")
         
         try:
-            source_dir = Path(source_path)
-            dest_dir = Path(destination_path)
+            source_dir = Path(self.source_path)
+            dest_dir = Path(self.destination_path)
             
             # --- Progress Step 1 ---
             self.progress_update.emit(5)
-            # ... (initial checks and directory setup)
             if not source_dir.is_dir():
-                self.status_update.emit(f"Error: Source directory '{source_path}' does not exist.")
+                self.status_update.emit(f"Error: Source directory '{self.source_path}' does not exist.")
                 self.finished.emit(False)
                 return
 
@@ -54,7 +66,7 @@ class CursorConverterLogic(QObject):
             
             # --- Progress Step 3 ---
             self.progress_update.emit(25)
-            if not self.theme_builder.load_cursor_map(map_file_path, self.converter.FILES): return
+            if not self.theme_builder.load_cursor_map(self.map_file_path, self.converter.FILES): return
             if not self.converter.check_source_files(source_dir): return
             
             # --- Progress Step 4 ---
@@ -74,10 +86,10 @@ class CursorConverterLogic(QObject):
             self.theme_builder.build_theme_files(dest_dir)
             
             # --- Progress Step 8 ---
-            if zip_theme:
+            if self.zip_theme:
                 self.progress_update.emit(90)
                 self.utilities.zip_theme(dest_dir)
-            if install_theme:
+            if self.install_theme:
                 self.progress_update.emit(95)
                 self.utilities.install_theme(dest_dir)
             

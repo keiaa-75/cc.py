@@ -2,8 +2,8 @@ import sys
 from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, 
                              QLabel, QLineEdit, QPushButton, 
                              QTextEdit, QFileDialog, QCheckBox,
-                             QProgressBar, QMessageBox) # Add QMessageBox and QProgressBar
-from PyQt6.QtCore import Qt
+                             QProgressBar, QMessageBox)
+from PyQt6.QtCore import Qt, QThread # Import QThread
 from pathlib import Path
 
 from cc_logic.main_logic import CursorConverterLogic
@@ -11,17 +11,32 @@ from cc_logic.main_logic import CursorConverterLogic
 class CursorConverterApp(QWidget):
     def __init__(self):
         super().__init__()
+        
+        # 1. Create a worker thread and the logic object
+        self.thread = QThread()
         self.logic = CursorConverterLogic()
+        
+        # 2. Move the logic object to the worker thread
+        self.logic.moveToThread(self.thread)
+        
         self.initUI()
+        
+        # 3. Connect the thread's started signal to the logic's run method
+        self.thread.started.connect(self.logic.run_conversion)
+        
+        # 4. Connect the logic's finished signal to clean up the thread
+        self.logic.finished.connect(self.thread.quit)
+        self.logic.finished.connect(self.thread.wait)
+        self.logic.finished.connect(self.logic.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+
 
     def initUI(self):
         self.setWindowTitle('ColorCursor Converter')
-        self.setFixedSize(600, 550) # Increased the height for the progress bar
+        self.setFixedSize(600, 550) 
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowMaximizeButtonHint)
 
         layout = QVBoxLayout()
-
-        # ... (Source, Destination, and Cursor Map widgets remain the same)
         source_label = QLabel('Source Directory:')
         self.source_path_input = QLineEdit()
         self.source_path_input.setPlaceholderText('Enter path to source directory...')
@@ -61,7 +76,6 @@ class CursorConverterApp(QWidget):
         self.convert_button.clicked.connect(self.start_conversion_process)
         layout.addWidget(self.convert_button)
 
-        # -------------------- NEW PROGRESS BAR --------------------
         self.progress_bar = QProgressBar(self)
         self.progress_bar.setValue(0)
         layout.addWidget(self.progress_bar)
@@ -75,7 +89,7 @@ class CursorConverterApp(QWidget):
 
         self.logic.status_update.connect(self.update_status_log)
         self.logic.finished.connect(self.conversion_finished)
-        self.logic.progress_update.connect(self.progress_bar.setValue) # Connect the new signal
+        self.logic.progress_update.connect(self.progress_bar.setValue)
 
         self.setLayout(layout)
 
@@ -98,7 +112,6 @@ class CursorConverterApp(QWidget):
         source_path = self.source_path_input.text()
         destination_path = self.destination_path_input.text()
         
-        # -------------------- NEW CONFIRMATION DIALOG --------------------
         msg = QMessageBox()
         msg.setWindowTitle("Confirm Conversion")
         msg.setIcon(QMessageBox.Icon.Question)
@@ -111,17 +124,9 @@ class CursorConverterApp(QWidget):
         
         if reply == QMessageBox.StandardButton.No:
             self.status_log.append("Conversion canceled by user.")
-            return # Exit the method if user cancels
-        # ------------------------------------------------------------------
+            return
 
-        # Get all settings
-        map_file_path = self.map_file_input.text()
-        zip_theme = self.zip_checkbox.isChecked()
-        install_theme = self.install_checkbox.isChecked()
-        
-        self.status_log.clear()
-        self.progress_bar.setValue(0) # Reset progress bar
-        
+        # Disable all controls
         self.convert_button.setEnabled(False)
         self.source_browse_button.setEnabled(False)
         self.destination_browse_button.setEnabled(False)
@@ -129,7 +134,17 @@ class CursorConverterApp(QWidget):
         self.zip_checkbox.setEnabled(False)
         self.install_checkbox.setEnabled(False)
 
-        self.logic.run_conversion(source_path, destination_path, map_file_path, zip_theme, install_theme)
+        self.status_log.clear()
+        self.progress_bar.setValue(0)
+        
+        # 5. Pass the arguments and start the thread
+        map_file_path = self.map_file_input.text()
+        zip_theme = self.zip_checkbox.isChecked()
+        install_theme = self.install_checkbox.isChecked()
+        
+        self.logic.set_conversion_parameters(source_path, destination_path, map_file_path, zip_theme, install_theme)
+        self.thread.start()
+
 
     def update_status_log(self, message):
         self.status_log.append(message)
