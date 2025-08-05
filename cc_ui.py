@@ -5,7 +5,7 @@ from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout,
 from PyQt6.QtCore import Qt
 from pathlib import Path
 
-from cc_logic import CursorConverterLogic
+from cc_logic.main_logic import CursorConverterLogic
 
 class CursorConverterApp(QWidget):
     def __init__(self):
