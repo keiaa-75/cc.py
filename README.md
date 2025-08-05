@@ -2,6 +2,8 @@
 
 **cc.py** is a user-friendly GUI tool designed to convert Windows cursor themes (`.cur` and `.ani` files) into a format compatible with Linux desktop environments.
 
+![cc.py running on my desktop](program-screenshot.png)
+
 The application uses the `win2xcur` command-line utility and provides a graphical interface for managing the entire conversion process, including dependency setup, file mapping, and theme installation.
 
 This project started out with `safeusernameig`, when they inquired our forum about converting Project Sekai cursors for use in Linux Mint. It started out as a simple bash script but has since then been reconsidered to be built as a modular Python application using PyQt6.
