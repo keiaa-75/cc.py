@@ -36,25 +36,31 @@ class CursorConverterApp(QWidget):
         self.setFixedSize(600, 550) 
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowMaximizeButtonHint)
 
-        layout = QVBoxLayout()
+        main_layout = QVBoxLayout()
+
+        self._create_path_widgets(main_layout)
+        self._create_option_widgets(main_layout)
+        self._create_control_widgets(main_layout)
+        self._create_status_widgets(main_layout)
+
+        self._connect_logic_signals()
+
+        self.setLayout(main_layout)
+
+    def _create_path_widgets(self, layout):
+        """Creates and adds the path input widgets to the layout."""
         source_label = QLabel('Source Directory:')
         self.source_path_input = QLineEdit()
         self.source_path_input.setPlaceholderText('Enter path to source directory...')
         self.source_browse_button = QPushButton('Browse')
         self.source_browse_button.clicked.connect(self.browse_source_directory)
-        layout.addWidget(source_label)
-        layout.addWidget(self.source_path_input)
-        layout.addWidget(self.source_browse_button)
 
         destination_label = QLabel('Destination Directory:')
         self.destination_path_input = QLineEdit()
         self.destination_path_input.setPlaceholderText('Enter path to destination directory...')
         self.destination_browse_button = QPushButton('Browse')
         self.destination_browse_button.clicked.connect(self.browse_destination_directory)
-        layout.addWidget(destination_label)
-        layout.addWidget(self.destination_path_input)
-        layout.addWidget(self.destination_browse_button)
-        
+
         map_label = QLabel('Cursor Map File (.json):')
         self.map_file_input = QLineEdit()
         default_map_path = str(Path(__file__).parent / "cursor_map.json")
@@ -62,16 +68,21 @@ class CursorConverterApp(QWidget):
         self.map_file_input.setPlaceholderText('Enter path to cursor map JSON file...')
         self.map_browse_button = QPushButton('Browse')
         self.map_browse_button.clicked.connect(self.browse_map_file)
-        
-        layout.addWidget(map_label)
-        layout.addWidget(self.map_file_input)
-        layout.addWidget(self.map_browse_button)
 
+        for widget in [source_label, self.source_path_input, self.source_browse_button,
+                       destination_label, self.destination_path_input, self.destination_browse_button,
+                       map_label, self.map_file_input, self.map_browse_button]:
+            layout.addWidget(widget)
+
+    def _create_option_widgets(self, layout):
+        """Creates and adds the checkbox option widgets to the layout."""
         self.zip_checkbox = QCheckBox('Zip theme?')
         self.install_checkbox = QCheckBox('Install theme?')
         layout.addWidget(self.zip_checkbox)
         layout.addWidget(self.install_checkbox)
 
+    def _create_control_widgets(self, layout):
+        """Creates and adds the main control buttons and progress bar."""
         self.convert_button = QPushButton('Start Conversion')
         self.convert_button.clicked.connect(self.start_conversion_process)
         layout.addWidget(self.convert_button)
@@ -80,18 +91,19 @@ class CursorConverterApp(QWidget):
         self.progress_bar.setValue(0)
         layout.addWidget(self.progress_bar)
 
+    def _create_status_widgets(self, layout):
+        """Creates and adds the status log widgets."""
         status_label = QLabel('Status Log:')
         self.status_log = QTextEdit()
         self.status_log.setReadOnly(True)
-        
         layout.addWidget(status_label)
         layout.addWidget(self.status_log)
 
+    def _connect_logic_signals(self):
+        """Connects signals from the logic worker to UI slots."""
         self.logic.status_update.connect(self.update_status_log)
         self.logic.finished.connect(self.conversion_finished)
         self.logic.progress_update.connect(self.progress_bar.setValue)
-
-        self.setLayout(layout)
 
     def browse_source_directory(self):
         directory = QFileDialog.getExistingDirectory(self, "Select Source Directory")

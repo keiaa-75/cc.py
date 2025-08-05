@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "colorcursor-converter"
+version = "0.1.0"
+description = "A tool to convert Windows cursor themes to a format for Linux."
+requires-python = ">=3.8"
+
+# These are the core dependencies needed to RUN the application
+dependencies = [
+    "PyQt6==6.9.1",
+    "Wand==0.6.13",
+    "win2xcur==0.1.2",
+    "numpy==2.3.2" 
+]
+
+[project.optional-dependencies]
+# These are dependencies for BUILDING/PACKAGING the application
+dev = [
+    "pyinstaller==6.15.0"
+]
+
+[project.gui-scripts]
+# This defines the command to run the application
+colorcursor-converter = "cc_ui:main"
