@@ -1,7 +1,8 @@
 import sys
 from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout, 
                              QLabel, QLineEdit, QPushButton, 
-                             QTextEdit, QFileDialog, QCheckBox)
+                             QTextEdit, QFileDialog, QCheckBox,
+                             QProgressBar, QMessageBox) # Add QMessageBox and QProgressBar
 from PyQt6.QtCore import Qt
 from pathlib import Path
 
@@ -15,11 +16,12 @@ class CursorConverterApp(QWidget):
 
     def initUI(self):
         self.setWindowTitle('ColorCursor Converter')
-        self.setFixedSize(600, 500) # Increased the height for new widgets
+        self.setFixedSize(600, 550) # Increased the height for the progress bar
         self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowMaximizeButtonHint)
 
         layout = QVBoxLayout()
 
+        # ... (Source, Destination, and Cursor Map widgets remain the same)
         source_label = QLabel('Source Directory:')
         self.source_path_input = QLineEdit()
         self.source_path_input.setPlaceholderText('Enter path to source directory...')
@@ -43,7 +45,6 @@ class CursorConverterApp(QWidget):
         default_map_path = str(Path(__file__).parent / "cursor_map.json")
         self.map_file_input.setText(default_map_path)
         self.map_file_input.setPlaceholderText('Enter path to cursor map JSON file...')
-        
         self.map_browse_button = QPushButton('Browse')
         self.map_browse_button.clicked.connect(self.browse_map_file)
         
@@ -53,13 +54,17 @@ class CursorConverterApp(QWidget):
 
         self.zip_checkbox = QCheckBox('Zip theme?')
         self.install_checkbox = QCheckBox('Install theme?')
-        
         layout.addWidget(self.zip_checkbox)
         layout.addWidget(self.install_checkbox)
 
         self.convert_button = QPushButton('Start Conversion')
         self.convert_button.clicked.connect(self.start_conversion_process)
         layout.addWidget(self.convert_button)
+
+        # -------------------- NEW PROGRESS BAR --------------------
+        self.progress_bar = QProgressBar(self)
+        self.progress_bar.setValue(0)
+        layout.addWidget(self.progress_bar)
 
         status_label = QLabel('Status Log:')
         self.status_log = QTextEdit()
@@ -70,6 +75,7 @@ class CursorConverterApp(QWidget):
 
         self.logic.status_update.connect(self.update_status_log)
         self.logic.finished.connect(self.conversion_finished)
+        self.logic.progress_update.connect(self.progress_bar.setValue) # Connect the new signal
 
         self.setLayout(layout)
 
@@ -91,12 +97,30 @@ class CursorConverterApp(QWidget):
     def start_conversion_process(self):
         source_path = self.source_path_input.text()
         destination_path = self.destination_path_input.text()
-        map_file_path = self.map_file_input.text()
         
+        # -------------------- NEW CONFIRMATION DIALOG --------------------
+        msg = QMessageBox()
+        msg.setWindowTitle("Confirm Conversion")
+        msg.setIcon(QMessageBox.Icon.Question)
+        msg.setText("Are you sure you want to start the conversion?")
+        msg.setInformativeText(f"The directory '{destination_path}' and its contents will be overwritten.")
+        msg.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        msg.setDefaultButton(QMessageBox.StandardButton.No)
+        
+        reply = msg.exec()
+        
+        if reply == QMessageBox.StandardButton.No:
+            self.status_log.append("Conversion canceled by user.")
+            return # Exit the method if user cancels
+        # ------------------------------------------------------------------
+
+        # Get all settings
+        map_file_path = self.map_file_input.text()
         zip_theme = self.zip_checkbox.isChecked()
         install_theme = self.install_checkbox.isChecked()
         
         self.status_log.clear()
+        self.progress_bar.setValue(0) # Reset progress bar
         
         self.convert_button.setEnabled(False)
         self.source_browse_button.setEnabled(False)
@@ -113,6 +137,7 @@ class CursorConverterApp(QWidget):
     def conversion_finished(self, success):
         if success:
             self.status_log.append("Conversion process finished successfully!")
+            self.progress_bar.setValue(100)
         else:
             self.status_log.append("Conversion process finished with errors.")
         
