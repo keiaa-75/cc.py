@@ -12,9 +12,10 @@ class CursorConverter(QObject):
         "Precision", "Text", "Unavailable", "Vertical", "Working"
     ]
     
-    def __init__(self, venv_path, parent=None):
+    # We will now accept the win2xcur_path directly
+    def __init__(self, win2xcur_path, parent=None):
         super().__init__(parent)
-        self.venv_path = venv_path
+        self.win2xcur_path = win2xcur_path
 
     def check_source_files(self, source_dir):
         """Checks for the presence of all required cursor files."""
@@ -32,13 +33,12 @@ class CursorConverter(QObject):
         """Converts Windows cursors to Linux format using win2xcur."""
         self.status_update.emit("Starting initial cursor conversion...")
         
-        win2xcur_path = str(self.venv_path / 'bin' / 'win2xcur')
-        
         for f in self.FILES:
             input_file = (source_dir / f"{f}.cur") if (source_dir / f"{f}.cur").exists() else (source_dir / f"{f}.ani")
             self.status_update.emit(f"Converting {input_file.name}...")
             try:
-                subprocess.run([win2xcur_path, str(input_file), '-o', str(dest_dir)], 
+                # Use the provided win2xcur_path
+                subprocess.run([self.win2xcur_path, str(input_file), '-o', str(dest_dir)], 
                                check=True, 
                                capture_output=True)
             except subprocess.CalledProcessError as e:

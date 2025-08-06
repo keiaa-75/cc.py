@@ -17,8 +17,8 @@ def resource_path(relative_path):
     except Exception:
         base_path = os.path.abspath(".")
 
-    # Now we join the base path with the 'data' directory and the relative path
-    return os.path.join(base_path, 'data', relative_path)
+    # We now join the base path directly with the relative path
+    return os.path.join(base_path, relative_path)
 
 class CursorConverterApp(QWidget):
     def __init__(self):
@@ -71,7 +71,6 @@ class CursorConverterApp(QWidget):
         map_label = QLabel('Cursor Map File (.json):')
         self.map_file_input = QLineEdit()
         
-        # --- MODIFIED LINE HERE ---
         default_map_path = resource_path("cursor_map.json")
         self.map_file_input.setText(default_map_path)
         

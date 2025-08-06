@@ -10,6 +10,7 @@ class DependenciesManager(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.venv_path = Path.home() / '.venvs/win2xcur-env'
+        self.win2xcur_path = None # New attribute to store the path
 
     def check_system_dependencies(self):
         """Checks if required command-line tools are installed."""
@@ -57,6 +58,9 @@ class DependenciesManager(QObject):
         except subprocess.CalledError as e:
             self.status_update.emit(f"Failed to install win2xcur: {e.stderr.strip()}")
             return False
+
+        # Set the path to the win2xcur script
+        self.win2xcur_path = str(self.venv_path / 'bin' / 'win2xcur')
 
         self.status_update.emit("Python environment is ready.")
         return True

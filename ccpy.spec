@@ -8,7 +8,7 @@ a = Analysis(
     ['cc_ui.py'],
     pathex=[],
     binaries=[],
-    datas=[('cursor_map.json', 'data')], # Change the destination to 'data'
+    datas=[('cursor_map.json', '.')], # Change the destination to 'data'
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

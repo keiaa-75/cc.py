@@ -16,12 +16,13 @@ class CursorConverterLogic(QObject):
         super().__init__(parent)
         
         self.dependencies_manager = DependenciesManager(self)
-        self.converter = CursorConverter(self.dependencies_manager.venv_path, self)
+        # We will now initialize the converter after setup_python_env, so we remove it here
+        self.converter = None 
         self.theme_builder = ThemeBuilder(self)
         self.utilities = Utilities(self)
         
         self.dependencies_manager.status_update.connect(self.status_update)
-        self.converter.status_update.connect(self.status_update)
+        # We will connect the converter's status update signal later
         self.theme_builder.status_update.connect(self.status_update)
         self.utilities.status_update.connect(self.status_update)
         
@@ -61,13 +62,25 @@ class CursorConverterLogic(QObject):
 
             # --- Progress Step 2 ---
             self.progress_update.emit(10)
-            if not self.dependencies_manager.check_system_dependencies(): return
-            if not self.dependencies_manager.setup_python_env(): return
+            if not self.dependencies_manager.check_system_dependencies(): 
+                self.finished.emit(False)
+                return
+            if not self.dependencies_manager.setup_python_env(): 
+                self.finished.emit(False)
+                return
             
+            # --- Initialize CursorConverter here, after the venv is set up
+            self.converter = CursorConverter(self.dependencies_manager.win2xcur_path, self)
+            self.converter.status_update.connect(self.status_update)
+
             # --- Progress Step 3 ---
             self.progress_update.emit(25)
-            if not self.theme_builder.load_cursor_map(self.map_file_path, self.converter.FILES): return
-            if not self.converter.check_source_files(source_dir): return
+            if not self.theme_builder.load_cursor_map(self.map_file_path, self.converter.FILES): 
+                self.finished.emit(False)
+                return
+            if not self.converter.check_source_files(source_dir): 
+                self.finished.emit(False)
+                return
             
             # --- Progress Step 4 ---
             self.progress_update.emit(40)
