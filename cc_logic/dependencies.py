@@ -10,13 +10,32 @@ class DependenciesManager(QObject):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.venv_path = Path.home() / '.venvs/win2xcur-env'
-        self.win2xcur_path = None # New attribute to store the path
+        self.venv_python_path = None
+        self.win2xcur_path = None
+        self.system_python_path = None
+
+    def _find_system_python(self):
+        """Finds the system's Python interpreter path."""
+        # Try to find python3, then fall back to python
+        python_path = shutil.which('python3')
+        if python_path is None:
+            python_path = shutil.which('python')
+        
+        if python_path is None:
+            self.status_update.emit("Error: Could not find a system Python interpreter.")
+            return False
+        
+        self.system_python_path = python_path
+        return True
 
     def check_system_dependencies(self):
         """Checks if required command-line tools are installed."""
         self.status_update.emit("Checking system dependencies...")
         
-        required_cmds = ['pip', 'python3', 'wget', 'zip']
+        if not self._find_system_python():
+            return False
+            
+        required_cmds = ['pip', 'wget', 'zip']
         missing_cmds = [cmd for cmd in required_cmds if shutil.which(cmd) is None]
 
         if missing_cmds:
@@ -24,7 +43,8 @@ class DependenciesManager(QObject):
             return False
         
         try:
-            subprocess.run([sys.executable, '-m', 'ensurepip', '--version'], 
+            # Use the found system Python interpreter to check for ensurepip
+            subprocess.run([self.system_python_path, '-m', 'ensurepip', '--version'], 
                            check=True, 
                            capture_output=True, 
                            text=True)
@@ -41,26 +61,52 @@ class DependenciesManager(QObject):
         
         if not self.venv_path.exists():
             try:
-                subprocess.run([sys.executable, '-m', 'venv', str(self.venv_path)], 
+                # Use the system's Python to create the venv, not sys.executable
+                subprocess.run([self.system_python_path, '-m', 'venv', str(self.venv_path)], 
                                check=True, 
                                capture_output=True)
-            except subprocess.CalledError as e:
+            except subprocess.CalledProcessError as e:
                 self.status_update.emit(f"Failed to create virtual environment: {e.stderr.strip()}")
                 return False
 
-        venv_python = str(self.venv_path / 'bin' / 'python3')
-        
+        # Determine the correct path to the venv's Python interpreter
+        if sys.platform == 'win32':
+            venv_bin_path = self.venv_path / 'Scripts'
+            venv_python_exe = venv_bin_path / 'python.exe'
+        else:
+            venv_bin_path = self.venv_path / 'bin'
+            venv_python_exe = venv_bin_path / 'python'
+
+        self.venv_python_path = str(venv_python_exe)
+
+        if not Path(self.venv_python_path).exists():
+            self.status_update.emit(f"Error: Virtual environment Python executable not found at {self.venv_python_path}.")
+            return False
+
         self.status_update.emit("Installing/checking win2xcur...")
         try:
-            subprocess.run([venv_python, '-m', 'pip', 'install', 'win2xcur'], 
+            # Use the venv's Python for pip
+            subprocess.run([self.venv_python_path, '-m', 'pip', 'install', 'win2xcur'], 
                            check=True, 
                            capture_output=True)
-        except subprocess.CalledError as e:
+        except subprocess.CalledProcessError as e:
             self.status_update.emit(f"Failed to install win2xcur: {e.stderr.strip()}")
             return False
 
-        # Set the path to the win2xcur script
-        self.win2xcur_path = str(self.venv_path / 'bin' / 'win2xcur')
+        # Find the win2xcur executable explicitly
+        if sys.platform == 'win32':
+            win2xcur_exe_path = venv_bin_path / 'win2xcur.exe'
+        else:
+            win2xcur_exe_path = venv_bin_path / 'win2xcur'
+            
+        if not win2xcur_exe_path.exists():
+            self.win2xcur_path = shutil.which('win2xcur', path=str(venv_bin_path))
+        else:
+            self.win2xcur_path = str(win2xcur_exe_path)
+
+        if not self.win2xcur_path:
+            self.status_update.emit("Error: win2xcur executable not found in the virtual environment.")
+            return False
 
         self.status_update.emit("Python environment is ready.")
         return True

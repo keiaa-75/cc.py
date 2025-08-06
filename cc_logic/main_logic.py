@@ -22,7 +22,6 @@ class CursorConverterLogic(QObject):
         self.utilities = Utilities(self)
         
         self.dependencies_manager.status_update.connect(self.status_update)
-        # We will connect the converter's status update signal later
         self.theme_builder.status_update.connect(self.status_update)
         self.utilities.status_update.connect(self.status_update)
         
@@ -70,6 +69,7 @@ class CursorConverterLogic(QObject):
                 return
             
             # --- Initialize CursorConverter here, after the venv is set up
+            # This is the key change. We pass the path from the dependencies manager.
             self.converter = CursorConverter(self.dependencies_manager.win2xcur_path, self)
             self.converter.status_update.connect(self.status_update)
 

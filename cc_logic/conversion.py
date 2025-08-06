@@ -12,7 +12,6 @@ class CursorConverter(QObject):
         "Precision", "Text", "Unavailable", "Vertical", "Working"
     ]
     
-    # We will now accept the win2xcur_path directly
     def __init__(self, win2xcur_path, parent=None):
         super().__init__(parent)
         self.win2xcur_path = win2xcur_path
@@ -37,7 +36,7 @@ class CursorConverter(QObject):
             input_file = (source_dir / f"{f}.cur") if (source_dir / f"{f}.cur").exists() else (source_dir / f"{f}.ani")
             self.status_update.emit(f"Converting {input_file.name}...")
             try:
-                # Use the provided win2xcur_path
+                # Use the explicitly found win2xcur_path
                 subprocess.run([self.win2xcur_path, str(input_file), '-o', str(dest_dir)], 
                                check=True, 
                                capture_output=True)
