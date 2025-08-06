@@ -129,10 +129,52 @@ class CursorConverterApp(QWidget):
         if file_path:
             self.map_file_input.setText(file_path)
 
+    def _show_error_message(self, title, message):
+        """Helper to display a critical error message box."""
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Icon.Critical)
+        msg.setText(title)
+        msg.setInformativeText(message)
+        msg.setWindowTitle(title)
+        msg.exec()
+
+    def _validate_inputs(self):
+        """Validates all user inputs before starting the conversion."""
+        source_path = self.source_path_input.text().strip()
+        destination_path = self.destination_path_input.text().strip()
+        map_file_path = self.map_file_input.text().strip()
+
+        if not all([source_path, destination_path, map_file_path]):
+            self._show_error_message("Validation Error", "All path fields must be filled.")
+            return False
+
+        source_dir = Path(source_path)
+        dest_dir = Path(destination_path)
+        map_file = Path(map_file_path)
+
+        if not source_dir.is_dir():
+            self._show_error_message("Validation Error", f"Source directory does not exist:\n{source_dir}")
+            return False
+        if not map_file.is_file():
+            self._show_error_message("Validation Error", f"Cursor map file does not exist:\n{map_file}")
+            return False
+
+        source_res, dest_res = source_dir.resolve(), dest_dir.resolve()
+
+        if source_res == dest_res:
+            self._show_error_message("Validation Error", "Source and destination directories cannot be the same.")
+            return False
+        if source_res in dest_res.parents:
+            self._show_error_message("Validation Error", "Destination directory cannot be a subfolder of the source directory.")
+            return False
+
+        return True
+
     def start_conversion_process(self):
-        source_path = self.source_path_input.text()
-        destination_path = self.destination_path_input.text()
-        
+        if not self._validate_inputs():
+            return
+
+        destination_path = self.destination_path_input.text().strip()
         msg = QMessageBox()
         msg.setWindowTitle("Confirm Conversion")
         msg.setIcon(QMessageBox.Icon.Question)
@@ -157,7 +199,8 @@ class CursorConverterApp(QWidget):
         self.status_log.clear()
         self.progress_bar.setValue(0)
         
-        map_file_path = self.map_file_input.text()
+        source_path = self.source_path_input.text().strip()
+        map_file_path = self.map_file_input.text().strip()
         zip_theme = self.zip_checkbox.isChecked()
         install_theme = self.install_checkbox.isChecked()
         

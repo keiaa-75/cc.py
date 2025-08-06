@@ -49,11 +49,6 @@ class CursorConverterLogic(QObject):
             
             # --- Progress Step 1 ---
             self.progress_update.emit(5)
-            if not source_dir.is_dir():
-                self.status_update.emit(f"Error: Source directory '{self.source_path}' does not exist.")
-                self.finished.emit(False)
-                return
-
             if dest_dir.exists():
                 shutil.rmtree(dest_dir)
 

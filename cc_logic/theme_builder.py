@@ -31,10 +31,6 @@ class ThemeBuilder(QObject):
             
             self.status_update.emit("Cursor mapping loaded and validated successfully.")
             return True
-            
-        except FileNotFoundError:
-            self.status_update.emit(f"Error: Cursor map file '{map_file_path}' not found.")
-            return False
         except json.JSONDecodeError as e:
             self.status_update.emit(f"Error: Failed to parse JSON from '{map_file_path}'. Please check the file's format. Details: {e}")
             return False
