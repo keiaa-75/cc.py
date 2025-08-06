@@ -3,28 +3,35 @@ from PyQt6.QtWidgets import (QApplication, QWidget, QVBoxLayout,
                              QLabel, QLineEdit, QPushButton, 
                              QTextEdit, QFileDialog, QCheckBox,
                              QProgressBar, QMessageBox)
-from PyQt6.QtCore import Qt, QThread # Import QThread
+from PyQt6.QtCore import Qt, QThread
 from pathlib import Path
+import os
 
 from cc_logic.main_logic import CursorConverterLogic
+
+# Function to get the correct path to a resource
+def resource_path(relative_path):
+    """ Get the absolute path to a resource, works for dev and for PyInstaller """
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    # Now we join the base path with the 'data' directory and the relative path
+    return os.path.join(base_path, 'data', relative_path)
 
 class CursorConverterApp(QWidget):
     def __init__(self):
         super().__init__()
         
-        # 1. Create a worker thread and the logic object
         self.thread = QThread()
         self.logic = CursorConverterLogic()
-        
-        # 2. Move the logic object to the worker thread
         self.logic.moveToThread(self.thread)
         
         self.initUI()
         
-        # 3. Connect the thread's started signal to the logic's run method
         self.thread.started.connect(self.logic.run_conversion)
         
-        # 4. Connect the logic's finished signal to clean up the thread
         self.logic.finished.connect(self.thread.quit)
         self.logic.finished.connect(self.thread.wait)
         self.logic.finished.connect(self.logic.deleteLater)
@@ -63,8 +70,11 @@ class CursorConverterApp(QWidget):
 
         map_label = QLabel('Cursor Map File (.json):')
         self.map_file_input = QLineEdit()
-        default_map_path = str(Path(__file__).parent / "cursor_map.json")
+        
+        # --- MODIFIED LINE HERE ---
+        default_map_path = resource_path("cursor_map.json")
         self.map_file_input.setText(default_map_path)
+        
         self.map_file_input.setPlaceholderText('Enter path to cursor map JSON file...')
         self.map_browse_button = QPushButton('Browse')
         self.map_browse_button.clicked.connect(self.browse_map_file)
@@ -138,7 +148,6 @@ class CursorConverterApp(QWidget):
             self.status_log.append("Conversion canceled by user.")
             return
 
-        # Disable all controls
         self.convert_button.setEnabled(False)
         self.source_browse_button.setEnabled(False)
         self.destination_browse_button.setEnabled(False)
@@ -149,7 +158,6 @@ class CursorConverterApp(QWidget):
         self.status_log.clear()
         self.progress_bar.setValue(0)
         
-        # 5. Pass the arguments and start the thread
         map_file_path = self.map_file_input.text()
         zip_theme = self.zip_checkbox.isChecked()
         install_theme = self.install_checkbox.isChecked()
