@@ -21,3 +21,41 @@ To run this application, you need to have the following installed on your Linux 
 - `pip` and `venv`: This is used to manage Python packages and create a virtual environment.
 - `ImageMagick`: This is required by win2xcur for processing the cursor files.
 - `zip`: This is the command-line utility used for zipping files. It is typically included with your Linux distribution.
+
+
+## Building from Source
+
+To build the application from source, follow these steps:
+
+1. Clone the repository and navigate to the project directory
+2. Create and activate a virtual environment:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+3. Install the required dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Run the application directly:
+   ```bash
+   python cc_ui.py
+   ```
+5. Build the executable (optional):
+   ```bash
+   pyinstaller ccpy.spec
+   ```
+   
+The executable will be created in the `dist/` directory.
+
+
+## Configuration
+
+The application uses a JSON file to define how Windows cursors are mapped to Linux cursors. A default mapping file is included with the application.
+
+To use a custom mapping, you may provide your own JSON file with the appropriate cursor mappings. The format expects each Windows cursor name as a key with the corresponding Linux cursor names as a space-separated string value.
+
+
+## License
+
+This project is licensed under the [Creative Commons CC0 1.0 Universal (CC0 1.0)](LICENSE). This means the software is dedicated to the public domain and is provided "as-is" without warranty of any kind. The author(s) disclaim all liability for damages resulting from the use of this software. You are free to use, modify, and distribute the software for any purpose without restriction.
