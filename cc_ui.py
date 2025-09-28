@@ -9,7 +9,6 @@ import os
 
 from cc_logic.main_logic import CursorConverterLogic
 
-# Function to get the correct path to a resource
 def resource_path(relative_path):
     """ Get the absolute path to a resource, works for dev and for PyInstaller """
     try:
@@ -17,7 +16,6 @@ def resource_path(relative_path):
     except Exception:
         base_path = os.path.abspath(".")
 
-    # We now join the base path directly with the relative path
     return os.path.join(base_path, relative_path)
 
 class CursorConverterApp(QWidget):

@@ -16,7 +16,6 @@ class DependenciesManager(QObject):
 
     def _find_system_python(self):
         """Finds the system's Python interpreter path."""
-        # Try to find python3, then fall back to python
         python_path = shutil.which('python3')
         if python_path is None:
             python_path = shutil.which('python')
@@ -43,7 +42,6 @@ class DependenciesManager(QObject):
             return False
         
         try:
-            # Use the found system Python interpreter to check for ensurepip
             subprocess.run([self.system_python_path, '-m', 'ensurepip', '--version'], 
                            check=True, 
                            capture_output=True, 
@@ -61,7 +59,6 @@ class DependenciesManager(QObject):
         
         if not self.venv_path.exists():
             try:
-                # Use the system's Python to create the venv, not sys.executable
                 subprocess.run([self.system_python_path, '-m', 'venv', str(self.venv_path)], 
                                check=True, 
                                capture_output=True)
@@ -69,7 +66,6 @@ class DependenciesManager(QObject):
                 self.status_update.emit(f"Failed to create virtual environment: {e.stderr.strip()}")
                 return False
 
-        # Determine the correct path to the venv's Python interpreter
         if sys.platform == 'win32':
             venv_bin_path = self.venv_path / 'Scripts'
             venv_python_exe = venv_bin_path / 'python.exe'
@@ -85,7 +81,6 @@ class DependenciesManager(QObject):
 
         self.status_update.emit("Installing/checking win2xcur...")
         try:
-            # Use the venv's Python for pip
             subprocess.run([self.venv_python_path, '-m', 'pip', 'install', 'win2xcur'], 
                            check=True, 
                            capture_output=True)
@@ -93,7 +88,6 @@ class DependenciesManager(QObject):
             self.status_update.emit(f"Failed to install win2xcur: {e.stderr.strip()}")
             return False
 
-        # Find the win2xcur executable explicitly
         if sys.platform == 'win32':
             win2xcur_exe_path = venv_bin_path / 'win2xcur.exe'
         else:
