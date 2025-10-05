@@ -1,9 +1,9 @@
 # cc.py
 
-[![Download cc.py](https://img.shields.io/badge/Download-Release-blue?style=for-the-badge&logo=github)](https://github.com/keiaa-75/cc.py/releases)
-[![Python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg?style=for-the-badge&logo=python)](https://www.python.org/)
-[![Qt](https://img.shields.io/badge/Made%20with-Qt-41CD52.svg?style=for-the-badge&logo=qt)](https://www.qt.io/)
-[![Linux](https://img.shields.io/badge/Supports-Linux-FCC624.svg?style=for-the-badge&logo=linux)](https://www.linux.org/)
+[![Download cc.py](https://img.shields.io/badge/Download-Release-blue?style=flat&logo=github)](https://github.com/keiaa-75/cc.py/releases)
+[![Python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg?style=flat&logo=python)](https://www.python.org/)
+[![Qt](https://img.shields.io/badge/Made%20with-Qt-41CD52.svg?style=flat&logo=qt)](https://www.qt.io/)
+[![Linux](https://img.shields.io/badge/Supports-Linux-FCC624.svg?style=flat&logo=linux)](https://www.linux.org/)
 
 **cc.py** is a user-friendly GUI tool designed to convert Windows cursor themes (`.cur` and `.ani` files) into a format compatible with Linux desktop environments.
 
