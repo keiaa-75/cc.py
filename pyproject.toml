@@ -4,24 +4,31 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "colorcursor-converter"
-version = "0.1.0"
+version = "0.2.0"
 description = "A tool to convert Windows cursor themes to a format for Linux."
-requires-python = ">=3.8"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
 
-# These are the core dependencies needed to RUN the application
 dependencies = [
     "PyQt6==6.9.1",
-    "Wand==0.6.13",
-    "win2xcur==0.1.2",
-    "numpy==2.3.2" 
+    "win2xcur==0.1.2"
 ]
 
 [project.optional-dependencies]
-# These are dependencies for BUILDING/PACKAGING the application
 dev = [
-    "pyinstaller==6.15.0"
+    "pyinstaller=6.15.0",
+    "pytest>=8"
 ]
 
-[project.gui-scripts]
-# This defines the command to run the application
-colorcursor-converter = "cc_ui:main"
+# [project.scripts]
+# ccpy = "ccpy.cli:main"
+# ccpy-gui = "ccpy.ui.app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+ccpy.core = ["data/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
